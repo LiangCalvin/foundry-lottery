@@ -12,6 +12,13 @@ import {
     AutomationCompatibleInterface
 } from "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
 
+import {
+    VRFConsumerBaseV2Plus
+} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {
+    VRFV2PlusClient
+} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+
 /**
  * @title A sample Raffle Contract
  * @author Patrick Collins
@@ -227,13 +234,34 @@ contract Raffle {
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
 
+    // 2. ต้องเพิ่มตัวแปรที่จำเป็นสำหรับใช้งาน VRF ในระดับสัญญา
+    bytes32 private immutable i_keyHash;
+    uint256 private immutable i_subscriptionId;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private immutable i_callbackGasLimit;
+    uint32 private constant NUM_WORDS = 1;
+
     event RaffleEnter(address indexed player);
+    event RequestedRaffleWinner(uint256 indexed requestId); // ควรมีเอาไว้เก็บค่า log
+    event WinnerPicked(address indexed winner); // เพิ่มไว้สำหรับเก็บประวัติผู้ชนะ
 
     error Raffle__NotEnoughETH();
+    error Raffle__TransferFailed();
 
-    constructor(uint256 entranceFee, uint256 interval) {
+    constructor(
+        uint256 entranceFee,
+        uint256 interval,
+        address _vrfCoordinator,
+        bytes32 keyHash,
+        uint256 subscriptionId,
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
+        s_lastTimeStamp = block.timestamp;
+        i_keyHash = keyHash;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
     }
 
     function enterRaffle() public payable {
