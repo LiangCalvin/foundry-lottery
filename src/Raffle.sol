@@ -26,6 +26,12 @@ import {
  * @dev This implements the Chainlink VRF Version 2
  */
 contract Raffle is VRFConsumerBaseV2Plus {
+    /* Type declarations */
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
+
     /* State variables */
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
@@ -38,6 +44,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUM_WORDS = 1;
+
+    RaffleState private s_raffleState;
 
     event RaffleEnter(address indexed player);
     event RequestedRaffleWinner(uint256 indexed requestId); // ควรมีเอาไว้เก็บค่า log
@@ -60,11 +68,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         i_keyHash = keyHash;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() public payable {
         if (msg.value < i_entranceFee) {
             revert Raffle__NotEnoughETH();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen(); // สร้าง Error เพิ่มด้วยนะ
         }
         s_players.push(payable(msg.sender));
         emit RaffleEnter(msg.sender);
@@ -83,6 +95,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (block.timestamp - s_lastTimeStamp <= i_interval) {
             revert();
         }
+        s_raffleState = RaffleState.CALCULATING;
 
         // Get a random winner v2.5
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
@@ -121,6 +134,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_lastTimeStamp = block.timestamp;
 
         emit WinnerPicked(recentWinner);
+        s_raffleState = RaffleState.OPEN;
+        s_lastTimeStamp = block.timestamp;
 
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
