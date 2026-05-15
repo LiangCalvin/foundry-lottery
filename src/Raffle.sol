@@ -135,7 +135,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     @dev This is the function that the Chainlink Automation nodes call to check if upkeep needs to be performed.
      */
     function checkUpkeep(
-        bytes calldata /* checkData */
+        bytes memory /* checkData */
     )
         public
         view
