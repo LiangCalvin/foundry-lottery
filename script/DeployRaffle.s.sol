@@ -7,17 +7,8 @@ import {Raffle} from "../src/Raffle.sol";
 // import {AddConsumer, CreateSubscription, FundSubscription} from "./Interactions.s.sol";
 
 contract DeployRaffle is Script {
-    function deployRaffle() external {
+    function deployRaffle() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
-        // (
-        //     uint256 entranceFee,
-        //     uint256 interval,
-        //     address vrfCoordinator,
-        //     bytes32 keyHash,
-        //     uint64 subscriptionId,
-        //     uint32 callbackGasLimit
-        // ) = helperConfig.activeNetworkConfig();
-
         // local -> deploy mocks, get localconfig
         // sepolia -> get sepolia config from helperconfig
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
