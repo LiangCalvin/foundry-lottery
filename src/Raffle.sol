@@ -18,7 +18,7 @@ import {
  * @notice This contract is for creating a sample raffle contract
  * @dev This implements the Chainlink VRF Version 2
  */
-contract Raffle is VRFConsumerBaseV2Plus {
+contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     /* Type declarations */
     enum RaffleState {
         OPEN,
@@ -126,6 +126,41 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (!success) {
             revert Raffle__TransferFailed();
         }
+    }
+
+    /**
+    @dev This is the function that the Chainlink Automation nodes call to check if upkeep needs to be performed.
+     */
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        bool isOpen = (s_raffleState == RaffleState.OPEN);
+        bool hasPlayers = (s_players.length > 0);
+        bool hasBalance = address(this).balance > 0;
+        bool timePassed = (block.timestamp - s_lastTimeStamp) >= i_interval;
+
+        upkeepNeeded = isOpen && hasPlayers && hasBalance && timePassed;
+        return (upkeepNeeded, bytes(""));
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external override {
+        // check to see if enough time has passed
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
+        }
+        s_raffleState = RaffleState.CALCULATING;
+
+        pickWinner();
     }
 
     /** Getter Functions */
