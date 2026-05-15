@@ -8,9 +8,12 @@ import {
 
 abstract contract CodeConstants {
     uint256 public constant SEPOLIA_CHAIN_ID = 11155111;
-    uint256 public MOCK_BASE_FEE = 0.25 ether;
-    uint256 public MOCK_GAS_PRICE_LINK = 1e9;
-    uint256 public MOCK_WEI_PER_UNIT_LINK = 1e18;
+    uint256 public constant LOCAL_CHAIN_ID = 31337;
+
+    // Mock constants
+    uint96 public constant MOCK_BASE_FEE = 0.25 ether;
+    uint96 public constant MOCK_GAS_PRICE_LINK = 1e9;
+    int256 public constant MOCK_WEI_PER_UNIT_LINK = 1e18;
 }
 
 contract HelperConfig is Script, CodeConstants {
@@ -23,7 +26,7 @@ contract HelperConfig is Script, CodeConstants {
         uint32 callbackGasLimit;
     }
 
-    NetworkConfig public activeNetworkConfig;
+    NetworkConfig public localNetworkConfig;
     mapping(uint256 chainId => NetworkConfig) private networkConfigs;
 
     error HelperConfig__NoConfigForChainId(uint256 chainId);
@@ -34,27 +37,24 @@ contract HelperConfig is Script, CodeConstants {
 
     function getConfigByChainId(
         uint256 chainId
-    ) public view returns (NetworkConfig memory) {
+    ) public returns (NetworkConfig memory) {
         if (networkConfigs[chainId].vrfCoordinator != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAIN_ID) {
             return getOrCreateAnvilEthConfig();
         } else {
-            revert(HelperConfig__NoConfigForChainId(chainId));
+            revert HelperConfig__NoConfigForChainId(chainId);
         }
     }
 
-    function getConfig() public view returns (NetworkConfig memory) {
+    function getConfig() public returns (NetworkConfig memory) {
         return getConfigByChainId(block.chainid);
     }
 
-    function getOrCreateAnvilEthConfig()
-        internal
-        returns (NetworkConfig memory)
-    {
+    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
         // check to see if we have a config for Anvil, if not, create one
-        if (localNetworkConfig().vrfCoordinator != address(0)) {
-            return localNetworkConfig();
+        if (localNetworkConfig.vrfCoordinator != address(0)) {
+            return localNetworkConfig;
         }
         // deploy the mocks
         vm.startBroadcast();
@@ -65,7 +65,7 @@ contract HelperConfig is Script, CodeConstants {
             );
         vm.stopBroadcast();
 
-        localNetworkConfig = new NetworkConfig({
+        localNetworkConfig = NetworkConfig({
             entranceFee: 0.01 ether,
             interval: 30, // 30 seconds
             vrfCoordinator: address(vrfCoordinatorV2_5Mock),
@@ -75,24 +75,6 @@ contract HelperConfig is Script, CodeConstants {
         });
 
         return localNetworkConfig;
-        // if (networkConfigs[LOCAL_CHAIN_ID].vrfCoordinator != address(0)) {
-        //     return networkConfigs[LOCAL_CHAIN_ID];
-        // }
-        // vm.startBroadcast();
-        // VRFCoordinatorV2_5Mock vrfCoordinatorV2_5Mock = new VRFCoordinatorV2_5Mock(
-        //     BASE_FEE,
-        //     GAS_PRICE_LINK
-        // );
-        // vm.stopBroadcast();
-        // networkConfigs[LOCAL_CHAIN_ID] = NetworkConfig({
-        //     entranceFee: 0.01 ether,
-        //     interval: 30, // 30 seconds
-        //     vrfCoordinator: address(vrfCoordinatorV2_5Mock),
-        //     keyHash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4, // Anvil Key Hash
-        //     subscriptionId: 0, // To be set after creating a subscription
-        //     callbackGasLimit: 500000 // Adjust based on your needs
-        // });
-        // return networkConfigs[LOCAL_CHAIN_ID];
     }
 
     function getSepoliaEthConfig()
