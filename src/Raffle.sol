@@ -98,30 +98,27 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
             })
         );
         emit RequestedRaffleWinner(requestId);
-
-        // uint256 indexOfWinner = block.timestamp % s_players.length;
-        // address payable recentWinner = s_players[indexOfWinner];
-        // s_players = new address payable[](0);
-        // (bool success, ) = recentWinner.call{value: address(this).balance}("");
-        // if (!success) {
-        //     revert("Transfer failed");
-        // }
     }
 
+    // CEI: Checks, Effects, Interactions pattern
     function fulfillRandomWords(
         uint256 /* requestId */,
         uint256[] calldata randomWords
     ) internal override {
+        // Check
+        // require or if condition
+
+        // Effects (Internal Contract State)
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
 
         s_players = new address payable[](0);
-        s_lastTimeStamp = block.timestamp;
-
-        emit WinnerPicked(recentWinner);
         s_raffleState = RaffleState.OPEN;
         s_lastTimeStamp = block.timestamp;
 
+        emit WinnerPicked(recentWinner);
+
+        // Interactions (External Contract Calls)
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
