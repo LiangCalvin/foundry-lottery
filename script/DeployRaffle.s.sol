@@ -9,29 +9,34 @@ import {Raffle} from "../src/Raffle.sol";
 contract DeployRaffle is Script {
     function deployRaffle() external {
         HelperConfig helperConfig = new HelperConfig();
-        (
-            uint256 entranceFee,
-            uint256 interval,
-            address vrfCoordinator,
-            bytes32 keyHash,
-            uint64 subscriptionId,
-            uint32 callbackGasLimit
-        ) = helperConfig.activeNetworkConfig();
+        // (
+        //     uint256 entranceFee,
+        //     uint256 interval,
+        //     address vrfCoordinator,
+        //     bytes32 keyHash,
+        //     uint64 subscriptionId,
+        //     uint32 callbackGasLimit
+        // ) = helperConfig.activeNetworkConfig();
+
+        // local -> deploy mocks, get localconfig
+        // sepolia -> get sepolia config from helperconfig
+        HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
 
         vm.startBroadcast();
 
         Raffle raffle = new Raffle(
-            entranceFee,
-            interval,
-            vrfCoordinator,
-            keyHash,
-            subscriptionId,
-            callbackGasLimit
+            config.entranceFee,
+            config.interval,
+            config.vrfCoordinator,
+            config.keyHash,
+            config.subscriptionId,
+            config.callbackGasLimit
         );
         vm.stopBroadcast();
+        return (raffle, helperConfig);
     }
 
-    function run() external returns (FundMe, HelperConfig) {
-        return deployFundMe();
+    function run() external returns (Raffle, HelperConfig) {
+        return deployRaffle();
     }
 }
