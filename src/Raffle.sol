@@ -46,6 +46,12 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     error Raffle__NotEnoughETH();
     error Raffle__TransferFailed();
+    error Raffle__UpkeepNotNeeded(
+        uint256 contractBalance,
+        uint256 playerCount,
+        uint256 raffleState
+    );
+    error Raffle__RaffleNotOpen();
 
     constructor(
         uint256 entranceFee,
@@ -75,7 +81,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         emit RaffleEnter(msg.sender);
     }
 
-    function pickWinner() external {
+    function pickWinner() public {
         // check to see if enough time has passed
         if (block.timestamp - s_lastTimeStamp <= i_interval) {
             revert();
