@@ -9,8 +9,8 @@ import {Raffle} from "../src/Raffle.sol";
 import {
     VRFCoordinatorV2_5Mock
 } from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
-// import {LinkToken} from "../test/mocks/LinkToken.sol";
-// import {CodeConstants} from "./HelperConfig.s.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol";
+import {CodeConstants} from "./HelperConfig.s.sol";
 
 contract CreateSubscription is Script {
     function createSubscriptionUsingConfig() public returns (uint256, address) {
@@ -20,12 +20,12 @@ contract CreateSubscription is Script {
         return (subId, vrfCoordinator);
     }
 
-    function CreateSubscription(
+    function createSubscription(
         address vrfCoordinator
-    ) public returns (uint64, address) {
+    ) public returns (uint256, address) {
         vm.startBroadcast();
         VRFCoordinatorV2_5Mock vrf = VRFCoordinatorV2_5Mock(vrfCoordinator);
-        uint64 subId = vrf.createSubscription();
+        uint256 subId = vrf.createSubscription();
         vm.stopBroadcast();
 
         console.log("Your subscription ID is:", subId);
