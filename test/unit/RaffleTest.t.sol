@@ -25,6 +25,8 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
 
+    event RaffleEnter(address indexed player);
+
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.run();
@@ -41,7 +43,7 @@ contract RaffleTest is Test {
         vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
 
-    function testRaffleInitializesInOpenState() external {
+    function testRaffleInitializesInOpenState() public view {
         // Arrange
         Raffle.RaffleState expected = Raffle.RaffleState.OPEN;
 
