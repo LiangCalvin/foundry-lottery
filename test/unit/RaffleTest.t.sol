@@ -57,4 +57,40 @@ contract RaffleTest is Test {
             "Raffle did not initialize in OPEN state"
         );
     }
+    /*//////////////////////////////////////////////////////////////
+                              ENTER RAFFLE
+    //////////////////////////////////////////////////////////////*/
+
+    function testRaffleRevertsWhenYouDontPayEnough() public {
+        // Arrange
+        vm.prank(PLAYER);
+
+        // Act / Assert
+        vm.expectRevert(Raffle.Raffle__NotEnoughETH.selector);
+        raffle.enterRaffle{value: entranceFee - 1}();
+    }
+
+    function testRaffleRecordsPlayerWhenTheyEnter() public {
+        // Arrange
+        vm.prank(PLAYER);
+
+        // Act
+        raffle.enterRaffle{value: entranceFee}();
+
+        // Assert
+        address actualPlayer = raffle.getPlayer(0);
+        assertEq(PLAYER, actualPlayer, "Player was not recorded");
+    }
+
+    function testEmitsEventOnEntrance() external {
+        // Arrange
+        vm.prank(PLAYER);
+
+        // Assert
+        vm.expectEmit(true, false, false, false, address(raffle));
+        emit RaffleEnter(PLAYER);
+
+        // Act
+        raffle.enterRaffle{value: entranceFee}();
+    }
 }
