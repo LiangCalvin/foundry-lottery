@@ -69,3 +69,14 @@ deploy-anvil:;
 	--sender ${ANVIL_PUBLIC_KEY} \
 	--broadcast \
 	-vvvv
+
+
+deploy-sepolia-FundSubscription:;
+	forge script script/Interactions.s.sol:FundSubscription \
+	--rpc-url ${SEPOLIA_RPC_URL} \
+	--account myTestAccount \
+	--sender ${PUBLIC_KEY} \
+	--broadcast \
+	--verify \
+	--etherscan-api-key ${ETHERSCAN_API_KEY} \
+	-vvvv
