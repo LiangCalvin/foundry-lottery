@@ -36,7 +36,57 @@ contract CreateSubscription is Script {
         return (subId, vrfCoordinator);
     }
 
-    function run() external returns (uint64, address) {
-        return CreateSubscriptionUsingConfig();
+    function run() public returns (uint256, address) {
+        return createSubscriptionUsingConfig();
+    }
+}
+
+contract FundSubscription is Script, CodeConstants {
+    uint256 public constant FUND_AMOUNT = 3 ether; // กำหนดจำนวนเงินที่ต้องการเติม (3 LINK ในรูปแบบของ wei)
+
+    function fundSubscriptionUsingConfig() public {
+        HelperConfig helperConfig = new HelperConfig();
+        address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
+        uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
+        address linkToken = helperConfig.getConfig().link;
+
+        fundSubscription(vrfCoordinator, subscriptionId, linkToken);
+    }
+
+    function fundSubscription(
+        address vrfCoordinator,
+        uint256 subscriptionId,
+        address linkToken
+    ) public {
+        console.log("Funding subscription ID:", subscriptionId);
+        console.log("Using VRF Coordinator:", vrfCoordinator);
+        console.log("On ChainId:", block.chainid);
+
+        if (block.chainid == LOCAL_CHAIN_ID) {
+            // สำหรับ local network ให้ใช้ฟังก์ชัน fundSubscription ของ VRFCoordinatorV2_5Mock
+            vm.startBroadcast();
+            VRFCoordinatorV2_5Mock(vrfCoordinator).fundSubscription(
+                subscriptionId,
+                FUND_AMOUNT
+            );
+            vm.stopBroadcast();
+        } else {
+            // สำหรับ testnet/mainnet ให้โอน LINK token ไปยัง subscription
+            vm.startBroadcast();
+            LinkToken(linkToken).transferAndCall(
+                vrfCoordinator,
+                FUND_AMOUNT,
+                abi.encode(subscriptionId)
+            );
+            vm.stopBroadcast();
+        }
+    }
+
+    function run() external {
+        HelperConfig helperConfig = new HelperConfig();
+        address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
+        uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
+        address link = helperConfig.getConfig().link;
+        fundSubscription(vrfCoordinator, subscriptionId, link);
     }
 }
