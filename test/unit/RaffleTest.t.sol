@@ -7,7 +7,9 @@ import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Test, console2} from "forge-std/Test.sol";
 // import {Vm} from "forge-std/Vm.sol";
-// import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {
+    VRFCoordinatorV2_5Mock
+} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 // import {LinkToken} from "../../test/mocks/LinkToken.sol";
 // import {CodeConstants} from "../../script/HelperConfig.s.sol";
 
@@ -91,6 +93,24 @@ contract RaffleTest is Test {
         emit RaffleEnter(PLAYER);
 
         // Act
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function testCantEnterWhenRaffleIsCalculating() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+
+        // Fast forward time and make upkeep needed
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        // Act
+        raffle.performUpkeep("");
+
+        // Assert
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
 }
