@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {
     VRFCoordinatorV2_5Mock
 } from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol";
 
 abstract contract CodeConstants {
     uint256 public constant SEPOLIA_CHAIN_ID = 11155111;
@@ -24,6 +25,7 @@ contract HelperConfig is Script, CodeConstants {
         bytes32 keyHash;
         uint256 subscriptionId;
         uint32 callbackGasLimit;
+        address link;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -63,6 +65,7 @@ contract HelperConfig is Script, CodeConstants {
                 MOCK_GAS_PRICE_LINK, // gas price link
                 MOCK_WEI_PER_UNIT_LINK // wei per unit link
             );
+        LinkToken linkToken = new LinkToken();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
@@ -71,7 +74,8 @@ contract HelperConfig is Script, CodeConstants {
             vrfCoordinator: address(vrfCoordinatorV2_5Mock),
             keyHash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4, // Anvil Key Hash
             subscriptionId: 0, // To be set after creating a subscription
-            callbackGasLimit: 500000 // Adjust based on your needs
+            callbackGasLimit: 500000, // Adjust based on your needs
+            link: address(linkToken)
         });
 
         return localNetworkConfig;
@@ -88,8 +92,9 @@ contract HelperConfig is Script, CodeConstants {
                 interval: 30, // 30 seconds
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B, // Sepolia VRF Coordinator
                 keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // Sepolia Key Hash
-                subscriptionId: 0, // To be set after creating a subscription
-                callbackGasLimit: 500000 // Adjust based on your needs
+                subscriptionId: 50393915214659707129599547485469067692109713680896221911365240219979570294108, // To be set after creating a subscription
+                callbackGasLimit: 500000, // Adjust based on your needs
+                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789 // Sepolia LINK Token
             });
     }
 }
