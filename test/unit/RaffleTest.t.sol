@@ -41,7 +41,9 @@ contract RaffleTest is Test {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.run();
 
-        HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
+        // HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
+        HelperConfig.NetworkConfig memory config = helperConfig
+            .getOrCreateAnvilEthConfig();
 
         entranceFee = config.entranceFee;
         interval = config.interval;
@@ -233,5 +235,100 @@ contract RaffleTest is Test {
             randomRequestId,
             address(raffle)
         );
+    }
+
+    function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney1()
+        public
+        raffleEntered
+    {
+        // Arrange
+        uint256 additionalEntrants = 5;
+        uint256 startingIndex = 1;
+        uint256 playerStartingBalance = PLAYER.balance;
+
+        // address expectedWinner = address(1);
+
+        for (
+            uint256 i = startingIndex;
+            i < startingIndex + additionalEntrants;
+            i++
+        ) {
+            address newPlayer = makeAddr(string(abi.encodePacked("player", i)));
+            hoax(newPlayer, 1 ether);
+            raffle.enterRaffle{value: entranceFee}();
+        }
+        uint256 startingTimestamp = raffle.getLastTimeStamp();
+        uint256 prize = entranceFee * (additionalEntrants + 1);
+
+        // uint256 winnerStartingBalance = expectedWinner.balance;
+
+        // Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        VRFCoordinatorV2_5Mock(_vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        // Assert
+        address recentWinner = raffle.getRecentWinner();
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        uint256 endingTimestamp = raffle.getLastTimeStamp();
+
+        // uint256 winnerBalance = recentWinner.balance;
+
+        assert(recentWinner != address(0)); // ✅ ตรวจสอบว่ามีผู้ชนะจริงและไม่ใช่ Address เปล่า
+        assert(uint256(raffleState) == 0); // OPEN
+        assert(endingTimestamp > startingTimestamp); // ✅ ตรวจสอบว่าเวลาถูกอัป
+        assertEq(address(raffle).balance, 0, "Raffle balance should be 0"); // ตู้หวยจ่ายตังค์จนเกลี้ยงตู้
+    }
+
+    function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney2()
+        public
+        raffleEntered
+    {
+        // Arrange
+        uint256 additionalEntrants = 3;
+        uint256 startingIndex = 1;
+        address expectedWinner = address(1);
+
+        for (
+            uint256 i = startingIndex;
+            i < startingIndex + additionalEntrants;
+            i++
+        ) {
+            address newPlayer = address(uint160(i));
+            hoax(newPlayer, 1 ether);
+            raffle.enterRaffle{value: entranceFee}();
+        }
+        uint256 startingTimeStamp = raffle.getLastTimeStamp();
+
+        uint256 winnerStartingBalance = expectedWinner.balance;
+
+        // Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        VRFCoordinatorV2_5Mock(_vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        // Assert
+        address recentWinner = raffle.getRecentWinner();
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        uint256 winnerBalance = recentWinner.balance;
+        uint256 endingTimeStamp = raffle.getLastTimeStamp();
+        uint256 prize = entranceFee * (additionalEntrants + 1);
+
+        assert(expectedWinner == recentWinner);
+        assert(uint256(raffleState) == 0);
+        assert(winnerBalance == winnerStartingBalance + prize);
+        assert(endingTimeStamp > startingTimeStamp);
     }
 }

@@ -118,6 +118,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         // Effects (Internal Contract State)
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
 
         s_players = new address payable[](0);
         s_raffleState = RaffleState.OPEN;
