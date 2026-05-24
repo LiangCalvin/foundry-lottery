@@ -219,4 +219,19 @@ contract RaffleTest is Test {
         );
         assert(uint256(requestId) > 0);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                           FULLFILRANDOMWORDS
+    //////////////////////////////////////////////////////////////*/
+
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
+        uint256 randomRequestId
+    ) public raffleEntered {
+        // Arrange
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(_vrfCoordinator).fulfillRandomWords(
+            randomRequestId,
+            address(raffle)
+        );
+    }
 }
