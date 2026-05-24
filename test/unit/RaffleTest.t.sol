@@ -6,7 +6,7 @@ import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Test, console2} from "forge-std/Test.sol";
-// import {Vm} from "forge-std/Vm.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {
     VRFCoordinatorV2_5Mock
 } from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
@@ -158,5 +158,65 @@ contract RaffleTest is Test {
             upkeepNeeded,
             "Upkeep should not be needed when raffle is not open"
         );
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             PERFORMUPKEEP
+    //////////////////////////////////////////////////////////////*/
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+
+        // Fast forward time and make upkeep needed
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        // Act / Assert
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public {
+        // Arrange
+        uint256 currentBalance = 0;
+        uint256 numPlayers = 0;
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        currentBalance = currentBalance + entranceFee;
+        numPlayers = 1;
+
+        // Act / Assert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__UpkeepNotNeeded.selector,
+                currentBalance,
+                numPlayers,
+                raffleState
+            )
+        );
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepUpdateRaffleStateAndEmitsRequestId()
+        public
+        raffleEntered
+    {
+        // Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        // Assert
+        Raffle.RaffleState expectedState = Raffle.RaffleState.CALCULATING;
+        Raffle.RaffleState actualState = raffle.getRaffleState();
+        assertEq(
+            uint256(expectedState),
+            uint256(actualState),
+            "Raffle state was not updated to CALCULATING"
+        );
+        assert(uint256(requestId) > 0);
     }
 }
