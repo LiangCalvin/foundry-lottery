@@ -11,9 +11,9 @@ import {
     VRFCoordinatorV2_5Mock
 } from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 // import {LinkToken} from "../../test/mocks/LinkToken.sol";
-// import {CodeConstants} from "../../script/HelperConfig.s.sol";
+import {CodeConstants} from "../../script/HelperConfig.s.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is Test, CodeConstants {
     Raffle public raffle;
     HelperConfig public helperConfig;
 
@@ -225,7 +225,12 @@ contract RaffleTest is Test {
     /*//////////////////////////////////////////////////////////////
                            FULLFILRANDOMWORDS
     //////////////////////////////////////////////////////////////*/
-
+    modifier skipFork() {
+        if (block.chainid != LOCAL_CHAIN_ID) {
+            return;
+        }
+        _;
+    }
     function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 randomRequestId
     ) public raffleEntered {
@@ -240,6 +245,7 @@ contract RaffleTest is Test {
     function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney1()
         public
         raffleEntered
+        skipFork
     {
         // Arrange
         uint256 additionalEntrants = 5;
@@ -289,6 +295,7 @@ contract RaffleTest is Test {
     function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney2()
         public
         raffleEntered
+        skipFork
     {
         // Arrange
         uint256 additionalEntrants = 3;
