@@ -26,6 +26,7 @@ contract HelperConfig is Script, CodeConstants {
         uint256 subscriptionId;
         uint32 callbackGasLimit;
         address link;
+        address account;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -75,7 +76,8 @@ contract HelperConfig is Script, CodeConstants {
             keyHash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4, // Anvil Key Hash
             subscriptionId: 0, // To be set after creating a subscription
             callbackGasLimit: 500000, // Adjust based on your needs
-            link: address(linkToken)
+            link: address(linkToken),
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 // เอามาจาก Base.sol ของ forge-std
         });
 
         return localNetworkConfig;
@@ -94,7 +96,8 @@ contract HelperConfig is Script, CodeConstants {
                 keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // Sepolia Key Hash
                 subscriptionId: 50393915214659707129599547485469067692109713680896221911365240219979570294108, // To be set after creating a subscription
                 callbackGasLimit: 500000, // Adjust based on your needs
-                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789 // Sepolia LINK Token
+                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789, // Sepolia LINK Token
+                account: 0x3c5eCdb9Ea9Ba9004d103bE4bD577481Eff98Fe8 // Your Sepolia account public address
             });
     }
 }
