@@ -53,7 +53,7 @@ fundSubscription:
 
 
 deploy-sepolia:;
-	forge script script/DeployFundMe.s.sol:DeployFundMe \
+	forge script script/DeployRaffle.s.sol:DeployRaffle \
 	--rpc-url ${SEPOLIA_RPC_URL} \
 	--account myTestAccount \
 	--sender ${PUBLIC_KEY} \
@@ -63,7 +63,7 @@ deploy-sepolia:;
 	-vvvv
 
 deploy-anvil:;
-	forge script script/DeployFundMe.s.sol:DeployFundMe \
+	forge script script/DeployRaffle.s.sol:DeployRaffle \
 	--rpc-url ${ANVIL_RPC_URL} \
 	--account myWallet \
 	--sender ${ANVIL_PUBLIC_KEY} \
